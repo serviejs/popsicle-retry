@@ -49,5 +49,8 @@
     "tslint": "^3.1.1",
     "typescript": "^1.7.3",
     "typings": "^0.6.7"
+  },
+  "dependencies": {
+    "any-promise": "^1.1.0"
   }
 }
