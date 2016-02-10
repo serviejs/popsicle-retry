@@ -40,6 +40,7 @@
   "homepage": "https://github.com/blakeembrey/popsicle-retry",
   "devDependencies": {
     "blue-tape": "^0.2.0",
+    "bluebird": "^3.2.2",
     "express": "^4.13.4",
     "istanbul": "^0.4.2",
     "popsicle": "^3.2.1",
