@@ -3,7 +3,7 @@
     "target": "es5",
     "outDir": "dist/",
     "module": "commonjs",
-    "moduleResolution": "classic",
+    "moduleResolution": "node",
     "noImplicitAny": true,
     "removeComments": true,
     "declaration": true,

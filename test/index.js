@@ -35,7 +35,7 @@ test('retry', function (t) {
         'Request-Id': '2'
       }
     })
-      .use(popsicleRetry({ maxRetries: 2 }))
+      .use(popsicleRetry(popsicleRetry.retries(2)))
       .then(function (res) {
         t.equal(res.status, 500)
       })
