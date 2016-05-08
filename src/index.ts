@@ -1,28 +1,40 @@
+import extend = require('xtend')
 import Promise = require('any-promise')
-import { Request, Response } from 'popsicle'
+import { Request, Response, PopsicleError } from 'popsicle'
 
 /**
  * Retry middleware.
  */
 function popsicleRetry (retries = popsicleRetry.retries()) {
-  return function (self: Request) {
-    let iter = 0
+  let iter = 0
 
-    self.always(function (request) {
-      const delay = retries(request, ++iter)
+  return function retry (request: Request, next: () => Promise<Response>) {
+    // Check for and attempt retry.
+    function retry (error: PopsicleError, response: Response, bail: any) {
+      const delay = retries(null, response, ++iter)
 
       if (delay > 0) {
         return new Promise(resolve => {
           setTimeout(() => {
-            resolve(request.clone())
+            const options = extend(request.toOptions(), { use: [retry] })
+
+            return resolve(new Request(options))
           }, delay)
         })
-          // Alias the response to the original request.
-          .then(function (response: Response) {
-            request.response = response
-          })
       }
-    })
+
+      return bail
+    }
+
+    return next()
+      .then(
+        function (response: Response) {
+          return retry(null, response, Promise.resolve(response))
+        },
+        function (error: PopsicleError) {
+          return retry(error, null, Promise.reject(error))
+        }
+      )
   }
 }
 
@@ -30,13 +42,13 @@ namespace popsicleRetry {
   /**
    * Check if the request should be attempted again.
    */
-  export function retryAllowed (request: Request) {
-    if (request.errored) {
-      return request.errored.code === 'EUNAVAILABLE'
+  export function retryAllowed (error: PopsicleError, response: Response) {
+    if (error) {
+      return error.code === 'EUNAVAILABLE'
     }
 
-    if (request.response) {
-      return request.response.statusType() === 5
+    if (response) {
+      return response.statusType() === 5
     }
 
     return false
@@ -47,8 +59,8 @@ namespace popsicleRetry {
    */
   export function retries (count = 5, isRetryAllowed = retryAllowed) {
     // Source: https://github.com/sindresorhus/got/blob/814bcacd1433d8f62dbb81260526b9ff56b26934/index.js#L261-L268
-    return function (request: Request, iter: number) {
-      if (iter > count || !isRetryAllowed(request)) {
+    return function (error: PopsicleError, response: Response, iter: number) {
+      if (iter > count || !isRetryAllowed(error, response)) {
         return -1
       }
 
