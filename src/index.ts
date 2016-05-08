@@ -9,30 +9,30 @@ function popsicleRetry (retries = popsicleRetry.retries()) {
   let iter = 0
 
   return function retry (request: Request, next: () => Promise<Response>) {
-    // Check for and attempt retry.
-    function retry (error: PopsicleError, response: Response, bail: any) {
-      const delay = retries(null, response, ++iter)
+    // Attempt a retry.
+    function attempt (error: PopsicleError, response: Response, result: any) {
+      const delay = retries(error, response, ++iter)
 
-      if (delay > 0) {
-        return new Promise(resolve => {
-          setTimeout(() => {
-            const options = extend(request.toOptions(), { use: [retry] })
-
-            return resolve(new Request(options))
-          }, delay)
-        })
+      if (delay <= 0) {
+        return result
       }
 
-      return bail
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const options = extend(request.toOptions(), { use: [retry] })
+
+          return resolve(new Request(options))
+        }, delay)
+      })
     }
 
     return next()
       .then(
         function (response: Response) {
-          return retry(null, response, Promise.resolve(response))
+          return attempt(null, response, Promise.resolve(response))
         },
         function (error: PopsicleError) {
-          return retry(error, null, Promise.reject(error))
+          return attempt(error, null, Promise.reject(error))
         }
       )
   }
