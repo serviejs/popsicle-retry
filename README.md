@@ -5,7 +5,7 @@
 [![Build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
 
-> Enable request retries for Popsicle (>= 6.0).
+> Enable request retries for Popsicle (`>= 6.1`).
 
 ## Installation
 
