@@ -46,7 +46,22 @@ namespace popsicleRetry {
    */
   export function retryAllowed (error: PopsicleError, response: Response) {
     if (error) {
-      return error.code === 'EUNAVAILABLE'
+      if (error.code === 'EUNAVAILABLE') {
+        if ((process as any).browser) {
+          return navigator.onLine !== false
+        }
+
+        const code: string = (error.cause as any).code
+
+        return (
+          code === 'ECONNREFUSED' ||
+          code === 'ECONNRESET' ||
+          code === 'ETIMEDOUT' ||
+          code === 'EPIPE'
+        )
+      }
+
+      return false
     }
 
     if (response) {
