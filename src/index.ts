@@ -18,13 +18,16 @@ function popsicleRetry (retries = popsicleRetry.retries()) {
       }
 
       return new Promise(resolve => {
-        setTimeout(() => {
-          const options = extend(request.toOptions(), {
-            use: request.middleware.slice(request.middleware.indexOf(retry))
-          })
+        setTimeout(
+          () => {
+            const options = extend(request.toOptions(), {
+              use: request.middleware.slice(request.middleware.indexOf(retry))
+            })
 
-          return resolve(new Request(options))
-        }, delay)
+            return resolve(new Request(options))
+          },
+          delay
+        )
       })
     }
 
