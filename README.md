@@ -4,6 +4,7 @@
 [![NPM downloads][downloads-image]][downloads-url]
 [![Build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
+[![Greenkeeper badge](https://badges.greenkeeper.io/blakeembrey/popsicle-retry.svg)](https://greenkeeper.io/)
 
 > Enable request retries for Popsicle (`>= 6.1`).
 
