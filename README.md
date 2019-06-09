@@ -4,35 +4,29 @@
 [![NPM downloads][downloads-image]][downloads-url]
 [![Build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
-[![Greenkeeper badge](https://badges.greenkeeper.io/blakeembrey/popsicle-retry.svg)](https://greenkeeper.io/)
 
-> Enable request retries for Popsicle (`>= 6.1`).
+> Enable request retry for Popsicle.
 
 ## Installation
 
-```sh
+```
 npm install popsicle-retry --save
 ```
 
 ## Usage
 
 ```js
-var request = require('popsicle').request
-var retry = require('popsicle-retry')
+import { retry } from "popsicle-retry";
 
-request('http://example.com')
-  .use(retry())
-  .then(...)
+const send = retry(transport);
+const res = await send(req);
 ```
-
-### Options
-
-Accepts a function that returns a number of milliseconds to back off for, or `-1`. Defaults to `popsicleRetry.retries(5, retryAllowed)`.
 
 ### Methods
 
-* **retryAllowed(request)** Check if a request should be attempted again. Defaults to `5xx` and unavailable errors.
-* **retries(count, isRetryAllowed)** An exponential backoff function, defaulting to 5 retries.
+- **retry(fn, shouldRetry?)** Wraps a request function with retry support. Accepts a second function that returns a delay, or `-1` (default is `retries()`).
+- **retryAllowed(error?, request?)** Check if a request should be retried. Defaults to `5xx` and unavailable errors.
+- **retries(count?, isRetryAllowed?)** An exponential back-off function, defaulting to 3 retries.
 
 ## License
 
@@ -42,7 +36,7 @@ Apache 2.0
 [npm-url]: https://npmjs.org/package/popsicle-retry
 [downloads-image]: https://img.shields.io/npm/dm/popsicle-retry.svg?style=flat
 [downloads-url]: https://npmjs.org/package/popsicle-retry
-[travis-image]: https://img.shields.io/travis/blakeembrey/popsicle-retry.svg?style=flat
-[travis-url]: https://travis-ci.org/blakeembrey/popsicle-retry
-[coveralls-image]: https://img.shields.io/coveralls/blakeembrey/popsicle-retry.svg?style=flat
-[coveralls-url]: https://coveralls.io/r/blakeembrey/popsicle-retry?branch=master
+[travis-image]: https://img.shields.io/travis/serviejs/popsicle-retry.svg?style=flat
+[travis-url]: https://travis-ci.org/serviejs/popsicle-retry
+[coveralls-image]: https://img.shields.io/coveralls/serviejs/popsicle-retry.svg?style=flat
+[coveralls-url]: https://coveralls.io/r/serviejs/popsicle-retry?branch=master

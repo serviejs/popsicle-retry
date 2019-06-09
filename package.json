@@ -1,24 +1,24 @@
 {
   "name": "popsicle-retry",
   "version": "3.2.1",
-  "description": "Enable request retries for Popsicle",
+  "description": "Enable request retry for Popsicle",
   "main": "dist/index.js",
   "files": [
-    "dist/",
-    "typings.json",
-    "LICENSE"
+    "dist/"
   ],
   "scripts": {
-    "lint": "tslint \"src/**/*.ts\"",
-    "build": "rm -rf dist/ && tsc",
-    "test-spec": "blue-tape test/index.js | tap-spec",
-    "test-cov": "istanbul cover --print none blue-tape -- test/index.js | tap-spec",
-    "test": "npm run lint && npm run build && npm run test-cov",
-    "prepublish": "typings install && npm run build"
+    "prettier": "prettier --write",
+    "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
+    "format": "npm run prettier -- README.md \"src/**/*.{js,ts}\"",
+    "build": "rimraf dist && tsc",
+    "specs": "jest --coverage",
+    "test": "npm run -s lint && npm run -s build && npm run -s specs && npm run -s size",
+    "prepare": "npm run build",
+    "size": "size-limit"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/blakeembrey/popsicle-retry.git"
+    "url": "git://github.com/serviejs/popsicle-retry.git"
   },
   "keywords": [
     "popsicle",
@@ -35,22 +35,61 @@
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/blakeembrey/popsicle-retry/issues"
+    "url": "https://github.com/serviejs/popsicle-retry/issues"
   },
-  "homepage": "https://github.com/blakeembrey/popsicle-retry",
+  "homepage": "https://github.com/serviejs/popsicle-retry",
+  "size-limit": [
+    {
+      "path": "./dist/index.js",
+      "limit": "1 kB"
+    }
+  ],
+  "jest": {
+    "roots": [
+      "<rootDir>/src/"
+    ],
+    "transform": {
+      "\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,json,css,md}": [
+      "npm run prettier",
+      "git add"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "servie": "^4.0.0"
+  },
   "devDependencies": {
-    "blue-tape": "^1.0.0",
-    "bluebird": "^3.2.2",
-    "express": "^4.13.4",
-    "istanbul": "^0.4.2",
-    "popsicle": "^9.1.0",
-    "tap-spec": "^4.1.1",
-    "tslint": "^5.2.0",
-    "typescript": "^2.0.3",
-    "typings": "^2.1.1"
-  },
-  "dependencies": {
-    "any-promise": "^1.3.0",
-    "xtend": "^4.0.1"
+    "@types/jest": "^24.0.13",
+    "husky": "^2.4.0",
+    "jest": "^24.8.0",
+    "lint-staged": "^8.2.0",
+    "prettier": "^1.18.2",
+    "servie": "^4.0.7",
+    "size-limit": "^1.3.6",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.5.1"
   }
 }

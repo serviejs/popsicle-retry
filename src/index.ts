@@ -1,93 +1,100 @@
-import extend = require('xtend')
-import Promise = require('any-promise')
-import { Request, Response, PopsicleError } from 'popsicle'
+import { CommonRequest, CommonResponse } from "servie/dist/common";
 
 /**
- * Retry middleware.
+ * Browser detection.
  */
-function popsicleRetry (retries = popsicleRetry.retries()) {
-  let iter = 0
+declare global {
+  namespace NodeJS {
+    interface Process {
+      browser?: boolean;
+    }
+  }
+}
 
-  return function retry (request: Request, next: () => Promise<Response>) {
-    // Attempt a retry.
-    function attempt (error: PopsicleError, response: Response, result: any) {
-      const delay = retries(error, response, ++iter)
-
-      if (delay <= 0) {
-        return result
+/**
+ * Check if the request should be attempted again.
+ */
+export function retryAllowed(
+  error?: Error & { code?: string },
+  response?: CommonResponse
+) {
+  if (error) {
+    if (error.code === "EUNAVAILABLE") {
+      if (process.browser) {
+        return navigator.onLine !== false;
       }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  if (response) return ~~(response.status / 100) === 5;
+
+  return false;
+}
+
+/**
+ * Init a default retry function.
+ */
+export function retries(count = 3, isRetryAllowed = retryAllowed) {
+  // Source: https://github.com/sindresorhus/got/blob/814bcacd1433d8f62dbb81260526b9ff56b26934/index.js#L261-L268
+  return function(
+    error: Error | undefined,
+    response: CommonResponse | undefined,
+    iter: number
+  ) {
+    if (iter > count || !isRetryAllowed(error, response)) {
+      return -1;
+    }
+
+    const noise = Math.random() * 100;
+    return 2 ** (iter - 1) * 1000 + noise;
+  };
+}
+
+/**
+ * Middleware signature.
+ */
+export type App<T extends CommonRequest, U extends CommonResponse> = (
+  req: T,
+  next: () => Promise<U>
+) => Promise<U>;
+
+/**
+ * Middleware for running retry logic.
+ */
+export function retry<T extends CommonRequest, U extends CommonResponse>(
+  fn: App<T, U>,
+  shouldRetry = retries()
+): App<T, U> {
+  return async function retry(request, next) {
+    let iter = 0;
+
+    // Attempt a retry.
+    function attempt(
+      error: Error | undefined,
+      response: U | undefined,
+      result: Promise<U>
+    ): Promise<U> {
+      const delay = shouldRetry(error, response, ++iter);
+      if (delay < 0) return result;
 
       return new Promise(resolve => {
-        setTimeout(
-          () => {
-            const options = extend(request.toOptions(), {
-              use: request.middleware.slice(request.middleware.indexOf(retry))
-            })
-
-            return resolve(new Request(options))
-          },
-          delay
-        )
-      })
+        setTimeout(() => resolve(run(request.clone() as T)), delay);
+      });
     }
 
-    return next()
-      .then(
-        function (response: Response) {
-          return attempt(null, response, Promise.resolve(response))
-        },
-        function (error: PopsicleError) {
-          return attempt(error, null, Promise.reject(error))
-        }
-      )
-  }
-}
-
-namespace popsicleRetry {
-  /**
-   * Check if the request should be attempted again.
-   */
-  export function retryAllowed (error: PopsicleError, response: Response) {
-    if (error) {
-      if (error.code === 'EUNAVAILABLE') {
-        if ((process as any).browser) {
-          return navigator.onLine !== false
-        }
-
-        const code: string = (error.cause as any).code
-
-        return (
-          code === 'ECONNREFUSED' ||
-          code === 'ECONNRESET' ||
-          code === 'ETIMEDOUT' ||
-          code === 'EPIPE'
-        )
+    async function run(req: T): Promise<U> {
+      try {
+        const res = await fn(req, next);
+        return attempt(undefined, res, Promise.resolve(res));
+      } catch (err) {
+        return attempt(err, undefined, Promise.reject(err));
       }
-
-      return false
     }
 
-    if (response) {
-      return response.statusType() === 5
-    }
-
-    return false
-  }
-
-  /**
-   * Init a default retry function.
-   */
-  export function retries (count = 5, isRetryAllowed = retryAllowed) {
-    // Source: https://github.com/sindresorhus/got/blob/814bcacd1433d8f62dbb81260526b9ff56b26934/index.js#L261-L268
-    return function (error: PopsicleError, response: Response, iter: number) {
-      if (iter > count || !isRetryAllowed(error, response)) {
-        return -1
-      }
-
-      const noise = Math.random() * 100
-      return (1 << iter) * 1000 + noise
-    }
-  }
+    return run(request.clone() as T);
+  };
 }
-
-export = popsicleRetry
