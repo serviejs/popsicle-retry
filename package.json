@@ -1,6 +1,6 @@
 {
   "name": "popsicle-retry",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Enable request retry for Popsicle",
   "main": "dist/index.js",
   "files": [
