@@ -18,11 +18,11 @@ describe("popsicle retry", () => {
   });
 
   it("should succeed after retry", async () => {
-    let i = 0
+    let i = 0;
 
     const transport = async (_: Request) => {
       return new Response(null, { status: ++i === 2 ? 200 : 500 });
-    }
+    };
 
     const send = retry(transport);
     const res = await send(req, done);
@@ -35,7 +35,7 @@ describe("popsicle retry", () => {
 
     const transport = async (_: Request) => {
       return new Response(null, { status: 500 });
-    }
+    };
 
     const send = retry(transport);
     const res = await send(req, done);
