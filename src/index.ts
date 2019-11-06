@@ -67,7 +67,12 @@ export type App<T extends CommonRequest, U extends CommonResponse> = (
  */
 export function retry<T extends CommonRequest, U extends CommonResponse>(
   fn: App<T, U>,
-  shouldRetry = retries()
+  shouldRetry: (
+    error: Error | undefined,
+    response: CommonResponse | undefined,
+    iter: number
+  ) => number = retries(),
+  preFlight: (req: T, iter: number, origRequest: T) => T = req => req
 ): App<T, U> {
   return async function retry(request, next) {
     let iter = 0;
@@ -88,7 +93,7 @@ export function retry<T extends CommonRequest, U extends CommonResponse>(
 
     async function run(req: T): Promise<U> {
       try {
-        const res = await fn(req, next);
+        const res = await fn(preFlight(req, iter, request), next);
         return attempt(undefined, res, Promise.resolve(res));
       } catch (err) {
         return attempt(err, undefined, Promise.reject(err));
